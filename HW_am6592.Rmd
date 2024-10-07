@@ -1,0 +1,44 @@
+---
+title: "HW-am6592"
+author: "Adeena Moghni"
+date: "2024-10-07"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse) #read csv
+library(readxl) #read excel
+library(haven) #read SAS
+library(ggridges)
+library(patchwork)
+library(p8105.datasets)
+```
+
+## Problem 2
+
+```{r setup, include=FALSE}
+demo_df = 
+  read.csv("data_imports/nhanes_covar.csv", na = c(".", "NA", ""),
+          skip = 5,
+          header = FALSE, 
+          col.names = c("SEQN", "sex", "age", "BMI", "education")) %>% 
+  janitor::clean_names() 
+
+mims_df = 
+    read.csv("data_imports/nhanes_accel.csv", na = c(".", "NA", "")) %>% 
+    janitor::clean_names() 
+
+full_accel_df = left_join(mims_df, demo_df, by = "seqn") %>% 
+  filter(age > 21) %>% 
+  na.omit(full_accel_df) %>% 
+  pivot_longer(
+    min1:min1440,
+    names_to = "minute", 
+    values_to = "*MIMS",
+    names_prefix = "min")
+
+```
+
+```{r}
+
+```
