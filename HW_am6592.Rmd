@@ -11,7 +11,10 @@ library(readxl) #read excel
 library(haven) #read SAS
 library(ggridges)
 library(patchwork)
-library(p8105.datasets)
+
+knitr::opts_chunk$set(
+  fig.align = "center"
+)
 ```
 
 ## Problem 2
@@ -55,9 +58,15 @@ full_accel_df = left_join(mims_df, demo_df, by = "seqn") %>%
 education_count =
   full_accel_df %>% 
   distinct(seqn, .keep_all = TRUE) %>% 
-  na.omit() %>% 
+  na.omit(full_accel_df) %>% 
+  mutate(sex = ifelse(sex == 1, "Male", "Female")) %>% 
+  mutate(education = ifelse(education == 1, "Less than High School",
+                            ifelse(education == 2, "High School Equivalent", "More than High School"))) %>% 
   group_by(sex, education) %>% 
-   summarize(counts = n())
+  summarize(counts = n()) %>% 
+  pivot_wider(
+    names_from = "education", 
+    values_from = "counts")
 
 knitr::kable(education_count)
 ```
@@ -76,7 +85,8 @@ ggplot(demo_plot, aes(x = age, fill = education)) +
   facet_grid(~sex) +
   labs(title = "Distribution of Education Levels by Age",
        x = "Age", y = "density",
-       fill = "Education Level")
+       fill = "Education Level") +
+  theme_bw()
 ```
 
 ```{r echo=FALSE, message = FALSE, warning = FALSE}
@@ -95,7 +105,8 @@ ggplot(activity_plot, aes(x = age, y = total_activity, color = education)) +
   facet_grid(~sex) +
   labs(title = "Total Daily Activity Levels vs. Age",
        x = "Age (years)", y = "Total Daily Activity (*MIMS)",
-       color = "Education Level")
+       color = "Education Level") +
+  theme_bw()
 ```
 
 ```{r echo=FALSE, message = FALSE, warning = FALSE}
@@ -105,7 +116,8 @@ ggplot(activity_plot, aes(x = age, y = total_activity, color = sex)) +
   facet_grid(~education) +
   labs(title = "Total Daily Activity Levels vs. Age",
        x = "Age (years)", y = "Total Daily Activity (*MIMS)",
-       color = "Education Level")
+       color = "Education Level") +
+  theme_bw()
 ```
 
 ## Problem 3
