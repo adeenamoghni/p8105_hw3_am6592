@@ -62,7 +62,7 @@ education_count =
 knitr::kable(education_count)
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, message = FALSE, warning = FALSE}
 demo_plot = 
   demo_df %>% 
   filter(age > 21) %>%
@@ -80,14 +80,23 @@ ggplot(demo_plot, aes(x = age, fill = education)) +
     )
 ```
 
-```{r}
+```{r echo=FALSE, message = FALSE, warning = FALSE}
 activity_plot = 
   full_accel_df %>%
   group_by(seqn, age, sex, education) %>% 
-  summarize(total_activity = sum(MIMS))
+  summarize(total_activity = sum(MIMS)) %>% 
+  mutate(sex = ifelse(sex == 1, "Male", "Female"))
 
-ggplot(activity_plot, aes(x = age, y = total_activity, color = sex)) +
-  geom_point()
+ggplot(activity_plot, aes(x = age, y = total_activity, color = education)) +
+  geom_point(alpha = .5) +
+  geom_smooth(se = FALSE) +
+  facet_grid(~sex) +
+  labs(title = "Total Activity Levels vs. Age",
+       x = "Age (years)", y = "Total Activity (*MIMS)",
+       color = "Education Level") +
+  scale_color_discrete(
+    labels = c("1" = "Less than High School", "2" = "High School Equivalent", "3" = "More than High School")
+    )
 ```
 
 
