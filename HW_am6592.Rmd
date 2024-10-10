@@ -16,17 +16,27 @@ library(p8105.datasets)
 
 ## Problem 2
 
-```{r setup, include=FALSE}
+```{r include=FALSE}
 demo_df = 
   read.csv("data_imports/nhanes_covar.csv", na = c(".", "NA", ""),
           skip = 5,
           header = FALSE, 
           col.names = c("SEQN", "sex", "age", "BMI", "education")) %>% 
-  janitor::clean_names() 
+  janitor::clean_names() %>% 
+  mutate(
+    seqn = as.character(seqn),
+    sex = as.factor(sex),
+    age = as.integer(age),
+    bmi = as.double(bmi),
+    education = as.factor(education)
+    )
 
 mims_df = 
-    read.csv("data_imports/nhanes_accel.csv", na = c(".", "NA", "")) %>% 
-    janitor::clean_names() 
+  read.csv("data_imports/nhanes_accel.csv", na = c(".", "NA", "")) %>% 
+  janitor::clean_names() %>% 
+  mutate(
+    seqn = as.character(seqn)
+  )
 
 full_accel_df = left_join(mims_df, demo_df, by = "seqn") %>% 
   filter(age > 21) %>% 
@@ -35,10 +45,57 @@ full_accel_df = left_join(mims_df, demo_df, by = "seqn") %>%
     min1:min1440,
     names_to = "minute", 
     values_to = "*MIMS",
-    names_prefix = "min")
-
+    names_prefix = "min") %>%  
+  mutate(
+    minute = as.factor(minute)
+  )
 ```
 
 ```{r}
+education_count =
+  full_accel_df %>% 
+  distinct(seqn, .keep_all = TRUE) %>% 
+  na.omit() %>% 
+  group_by(sex, education) %>% 
+   summarize(counts = n())
 
+knitr::kable(education_count)
 ```
+
+```{r}
+demo_plot = 
+  demo_df %>% 
+  filter(age > 21) %>%
+  na.omit(demo_df) %>% 
+  mutate(sex = ifelse(sex == 1, "Male", "Female"))
+
+new_label= c("Female", "Male")
+
+ggplot(demo_plot, aes(x = age, fill = education)) +
+  geom_density(alpha = .4, adjust = .5, color = "blue") +
+  facet_grid(~sex) +
+  labs(title = "Distribution of Education Levels by Age",
+       x = "Age", y = "density",
+       fill = "Education Level") +
+  scale_fill_discrete(
+    labels = c("1" = "Less than High School", "2" = "High School Equivalent", "3" = "More than High School")
+    )
+```
+
+
+## Problem 3
+```{r}
+jan2020_df = 
+  read.csv("data_imports/citibike/Jan_2020_Citi.csv", na = c(".", "NA", ""))
+
+jan2024_df = 
+  read.csv("data_imports/citibike/Jan_2024_Citi.csv", na = c(".", "NA", ""))
+
+july2020_df = 
+  read.csv("data_imports/citibike/July_2020_Citi.csv", na = c(".", "NA", ""))
+
+july2024_df = 
+  read.csv("data_imports/citibike/July_2024_Citi.csv", na = c(".", "NA", ""))
+```
+
+
