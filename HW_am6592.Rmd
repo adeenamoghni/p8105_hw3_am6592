@@ -66,7 +66,7 @@ education_count =
   summarize(counts = n()) %>% 
   pivot_wider(
     names_from = "education", 
-    values_from = "counts")
+    values_from = "counts" )
 
 knitr::kable(education_count)
 ```
@@ -123,16 +123,51 @@ ggplot(activity_plot, aes(x = age, y = total_activity, color = sex)) +
 ## Problem 3
 ```{r include=FALSE}
 jan2020_df = 
-  read.csv("data_imports/citibike/Jan_2020_Citi.csv", na = c(".", "NA", ""))
+  read.csv("data_imports/citibike/Jan_2020_Citi.csv", na = c(".", "NA", "")) %>% 
+  mutate("date" = "January 2020")
 
 jan2024_df = 
-  read.csv("data_imports/citibike/Jan_2024_Citi.csv", na = c(".", "NA", ""))
+  read.csv("data_imports/citibike/Jan_2024_Citi.csv", na = c(".", "NA", ""))%>% 
+  mutate("date" = "January 2024")
 
 july2020_df = 
-  read.csv("data_imports/citibike/July_2020_Citi.csv", na = c(".", "NA", ""))
+  read.csv("data_imports/citibike/July_2020_Citi.csv", na = c(".", "NA", ""))%>% 
+  mutate("date" = "July 2020")
 
 july2024_df = 
-  read.csv("data_imports/citibike/July_2024_Citi.csv", na = c(".", "NA", ""))
+  read.csv("data_imports/citibike/July_2024_Citi.csv", na = c(".", "NA", ""))%>% 
+  mutate("date" = "July 2024")
+
+combined_df = 
+  bind_rows(jan2020_df, july2020_df, jan2024_df, july2024_df) %>% 
+  rename("member_type" = "member_casual")
 ```
 
+```{r echo=FALSE, message = FALSE, warning = FALSE}
+ride_count =
+  combined_df %>% 
+  na.omit(combined_df) %>%
+  group_by(date, member_type) %>%
+  summarize(counts = n()) %>% 
+  pivot_wider(
+    names_from = "member_type", 
+    values_from = "counts" )
+
+knitr::kable(ride_count)
+  
+```
+
+```{r echo=FALSE, message = FALSE, warning = FALSE}
+july2024_rank =
+  july2024_df %>% 
+  na.omit(july_df) %>%
+  group_by(start_station_name) %>%
+  summarize(counts = n()) %>% 
+  arrange(desc(counts)) %>% 
+  slice(1:5)
+
+
+knitr::kable(july2024_rank)
+  
+```
 
