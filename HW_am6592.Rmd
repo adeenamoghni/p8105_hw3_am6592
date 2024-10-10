@@ -1,5 +1,5 @@
 ---
-title: "HW-am6592"
+title: "HW3-am6592"
 author: "Adeena Moghni"
 date: "2024-10-07"
 output: github_document
@@ -44,14 +44,14 @@ full_accel_df = left_join(mims_df, demo_df, by = "seqn") %>%
   pivot_longer(
     min1:min1440,
     names_to = "minute", 
-    values_to = "*MIMS",
+    values_to = "MIMS",
     names_prefix = "min") %>%  
   mutate(
     minute = as.factor(minute)
   )
 ```
 
-```{r}
+```{r echo=FALSE, message = FALSE, warning = FALSE}
 education_count =
   full_accel_df %>% 
   distinct(seqn, .keep_all = TRUE) %>% 
@@ -62,14 +62,12 @@ education_count =
 knitr::kable(education_count)
 ```
 
-```{r}
+```{r echo=FALSE}
 demo_plot = 
   demo_df %>% 
   filter(age > 21) %>%
   na.omit(demo_df) %>% 
   mutate(sex = ifelse(sex == 1, "Male", "Female"))
-
-new_label= c("Female", "Male")
 
 ggplot(demo_plot, aes(x = age, fill = education)) +
   geom_density(alpha = .4, adjust = .5, color = "blue") +
@@ -82,9 +80,19 @@ ggplot(demo_plot, aes(x = age, fill = education)) +
     )
 ```
 
+```{r}
+activity_plot = 
+  full_accel_df %>%
+  group_by(seqn, age, sex, education) %>% 
+  summarize(total_activity = sum(MIMS))
+
+ggplot(activity_plot, aes(x = age, y = total_activity, color = sex)) +
+  geom_point()
+```
+
 
 ## Problem 3
-```{r}
+```{r include=FALSE}
 jan2020_df = 
   read.csv("data_imports/citibike/Jan_2020_Citi.csv", na = c(".", "NA", ""))
 
