@@ -166,8 +166,28 @@ july2024_rank =
   arrange(desc(counts)) %>% 
   slice(1:5)
 
-
 knitr::kable(july2024_rank)
+
+```
+
+```{r}
+median_plot = 
+  combined_df %>% 
+  na.omit(combined_df) %>%
+  separate(date, into = c("month", "year")) %>% 
+  group_by(weekdays, month, year) %>% 
+  summarize(median_ride = median(duration))
+  
+ggplot(median_plot, aes(x = median_ride, y = weekdays, fill = year)) +
+  geom_histogram(stat = "identity", position = "dodge") +
+  facet_grid(~month) +
+  labs(title = "Median Ride Time (minutes) vs. Days of the Week",
+       x = "Media Ride Time (minutes)", y = "Weekdays") +
+  theme_bw()
   
 ```
 
+
+```{r}
+
+```
