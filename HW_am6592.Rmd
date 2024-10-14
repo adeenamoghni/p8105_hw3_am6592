@@ -189,5 +189,18 @@ ggplot(median_plot, aes(x = median_ride, y = weekdays, fill = year)) +
 
 
 ```{r}
+df = 
+  combined_df %>% 
+  na.omit(combined_df) %>%
+  separate(date, into = c("month", "year")) %>% 
+  filter(year == 2024) %>% 
+  group_by(month, member_type, rideable_type) %>% 
+  reframe(duration)
 
+ggplot(df, aes(x = month, y = duration, color = member_type)) +
+  geom_boxplot() +
+  facet_grid(~rideable_type) + 
+  labs(title = "Distribution of Ride Times (minutes) vs. Month",
+       x = "Month", y = "Ride Duration (minutes)") +
+  theme_bw()
 ```
