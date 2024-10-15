@@ -165,7 +165,7 @@ ride_count =
 knitr::kable(ride_count)
   
 ```
-
+Member ride counts have always been substatially higher than "casual" riders. July in both years saw an increase in rides from both membership rides, corressponding to more people biking in the summer. There are also a lot more riders in 2024 in both January and July compared to the same months in 2020. This may be due to less people knowing about these bikes/ less bikes or bike station available for the public to use. Additionally, July 2020 still had very high Covid-19 rates, so it could also indicate people quarantining due to the pandemic. 
 ```{r}
 july2024_rank =
   july2024_df %>% 
@@ -195,7 +195,7 @@ ggplot(median_plot, aes(x = median_ride, y = weekdays, fill = year)) +
   theme_bw()
   
 ```
-
+Median ride times were longer in all days in both January and July in 2020 compared to 2024. This could be due to less stations being available in 2020 compared to 2024. Additionally, in July, the difference between 2020 and 2024 median ride times is much more pronounced compared to January. This could be due to the pandemic and people avoiding public transport to get around the city. 
 
 ```{r}
 ride_dist_plot = 
@@ -213,4 +213,4 @@ ggplot(ride_dist_plot, aes(x = month, y = duration, color = member_type)) +
        x = "Month", y = "Ride Duration (minutes)") +
   theme_bw()
 ```
-
+There are many outliers in all subsets of these data, but the boxplots in general show that the ride times for casual riders is higher than that of member riders. Casual riders have higher rental rates and fees, so it may make more sense financially for these riders to have fewer, longer rides compared to member riders, who can have many, shorter rides.  
