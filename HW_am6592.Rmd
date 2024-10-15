@@ -6,17 +6,99 @@ output: github_document
 ---
 
 ```{r setup, include=FALSE}
-library(tidyverse) #read csv
-library(readxl) #read excel
-library(haven) #read SAS
-library(ggridges)
+library(tidyverse) 
 library(patchwork)
+library(p8105.datasets)
 
 knitr::opts_chunk$set(
+  echo = TRUE,
+	warning = FALSE,
   fig.align = "center"
 )
 ```
+## Problem 1
 
+```{r}
+data("ny_noaa")
+
+mode_prcp =
+  ny_noaa %>% 
+  count(prcp) %>%
+  arrange(desc(n))
+
+mode_snow = 
+  ny_noaa %>% 
+  count(snow) %>%
+  arrange(desc(n))
+
+mode_snwd = 
+  ny_noaa %>% 
+  count(snwd) %>%
+  arrange(desc(n))
+
+mode_tmax = 
+  ny_noaa %>% 
+  count(tmax) %>%
+  arrange(desc(n))
+
+mode_tmin = 
+  ny_noaa %>% 
+  count(tmin) %>%
+  arrange(desc(n))
+```
+
+The NOAA dataset is `r `nrow(ny_noaa)` rows by `r `ncol(ny_noaa)` columns. The variable names are `r colnames(ny_noaa)`. When taking the counts of each column value and arranging in descending order to find the most common values in each column, NA is either the first of second most common value in each column, indication missing data is a huge issue for this data set.
+
+```{r}
+ny_noaa = 
+  ny_noaa %>% 
+  separate(date, into = c("year", "month", "day"), convert = TRUE) %>% 
+  mutate(
+    tmax = as.numeric(tmax),
+    tmin = as.numeric(tmin))
+```
+
+```{r}
+snow_rank =
+  ny_noaa %>% 
+  group_by(snow) %>%
+  summarize(counts = n()) %>% 
+  arrange(desc(counts)) %>% 
+  slice(1:5)
+
+knitr::kable(snow_rank)
+```
+
+As seen from the table above, the most common value of snowfall is 0, meaning it did not snow most days in New York.
+
+```{r}
+ny_noaa %>% 
+  group_by(id, year, month) %>% 
+  filter(month %in% c(1, 7)) %>% 
+  summarize(mean_tmax = mean(tmax, na.rm = TRUE))%>% 
+  ggplot(aes(x = year, y = mean_tmax, group = id)) + 
+  geom_point() +
+  facet_grid(~month) +
+  labs(title = "Mean Temp vs Year for January and July", color = "Education Level")
+```
+
+July has much higher temperatures compared to January at all station and time points. Temperatures also follow the same trends wherein stations' temps go all up or down around the same year in both months (overall).
+
+```{r}
+ min_vs_max =
+  ny_noaa %>%
+  na.omit(ny_noaa) %>% 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point()
+
+ snow_dist = 
+  ny_noaa %>% 
+  filter(snow < 100, snow > 0) %>% 
+  ggplot(aes(x = snow, y = as.factor(year))) + 
+  geom_boxplot()
+ 
+ min_vs_max + snow_dist
+```
 ## Problem 2
 
 ```{r}
@@ -40,7 +122,7 @@ mims_df =
   janitor::clean_names()
 
 full_accel_df = left_join(mims_df, demo_df, by = "seqn") %>% 
-  filter(age > 20, !is.na(seqn), !is.na(sex), !is.na(age), !is.na(bmi), !is.na(education)) %>% 
+  filter(age >= 21, !is.na(seqn), !is.na(sex), !is.na(age), !is.na(bmi), !is.na(education)) %>% 
   pivot_longer(
     min1:min1440,
     names_to = "minute", 
@@ -71,7 +153,7 @@ knitr::kable(education_count)
 ```{r}
 demo_plot = 
   demo_df %>% 
-  filter(age > 20) %>%
+  filter(age >= 21) %>%
   na.omit(demo_df) %>% 
   mutate(sex = ifelse(sex == 1, "Male", "Female")) %>% 
   mutate(education = ifelse(education == 1, " Less than High School",
@@ -85,7 +167,9 @@ ggplot(demo_plot, aes(x = age, fill = education)) +
        fill = "Education Level") +
   theme_bw()
 ```
-The number of males and females who have less than a high school equivalent education are about the same (27 and 28, respectively), as are the number of men and women who have more than a high school equivalent education (56 and 59, respectively). However, the number of males who have a high school equivalent education far outnumber the number of women who have the same education level (35 and 23 , respectively). In both sexes, about half the participants have more than a high school education. When blocking for age, those with more than a high school equivalent education tended to skew towards younger women from the ages fo 20 to 40. Those with a high school equivalent and less than high school equivalent education tended to skew towards older women (aged 60+) but there was local maxima for both these education levels in middle aged women (40-60 years old), but not as pronounced compared to in older women. In men, those with more than a high school equivalent education also tended to be younger, but this skewness was not as pronounced as compared to the distribution of women of the same education level. Those with less than a high school equivalent education skewed to be either between the ages of 40 to 50 or 60+, while those with a high school equivalent education skewed to middle ages men (between 50 to 60 years old)
+  The table was done by grouping education and sex columns together and using the summarize tab to count the number of individuals in each education level by sex. The education/age visualization is a simple density plot that highlights which age group had higher density/individuals in certain education levels, separated by sex.
+  The number of males and females who have less than a high school equivalent education are about the same (27 and 28, respectively), as are the number of men and women who have more than a high school equivalent education (56 and 59, respectively). However, the number of males who have a high school equivalent education far outnumber the number of women who have the same education level (35 and 23 , respectively). In both sexes, about half the participants have more than a high school education. 
+  When blocking for age, those with more than a high school equivalent education tended to skew towards younger women from the ages fo 20 to 40. Those with a high school equivalent and less than high school equivalent education tended to skew towards older women (aged 60+) but there was local maxima for both these education levels in middle aged women (40-60 years old), but not as pronounced compared to in older women. In men, those with more than a high school equivalent education also tended to be younger, but this skewness was not as pronounced as compared to the distribution of women of the same education level. Those with less than a high school equivalent education skewed to be either between the ages of 40 to 50 or 60+, while those with a high school equivalent education skewed to middle aged men (between 50 to 60 years old)
 ```{r}
 activity_plot = 
   full_accel_df %>%
@@ -106,13 +190,14 @@ ggplot(activity_plot, aes(x = age, y = total_activity, color = sex)) +
   theme_bw()
 ```
 
-As age increases, males and females of all education levels see a decrease in activity overall. For those with less than a HS education, younger females (<40 years of age) tended to be more active, after 40 years old, males tended to be more active. For those with a HS equivalent education and more than HS education, females tended to be more active compared to men. For adults <~50 years old, those with more than a HS education tended to be less active, in both males and females. After this point, however, activity seems to have evened out. 
+  This plot was made by summing up the activity of every unique seqn ID for the 24 hour period we have data for. The data was grouped by seqn ID, age, sex, and education, and using the summarize () function, the sum for the MIMS activity was taken. This grouping made it possible to block by education level and sex in the scatterplot, which was done by using different color points/lines for females and males and different facets for education level.
+  As age increases, males and females of all education levels see a decrease in activity overall. For those with less than a HS education, younger females (<40 years of age) tended to be more active, after 40 years old, males tended to be more active. For those with a HS equivalent education and more than HS education, females tended to be more active compared to men. For adults <~50 years old, those with more than a HS education tended to be less active, in both males and females. After this point, however, activity seems to have evened out. 
 
 ```{r}
 timecourse_plot = 
   full_accel_df %>%
   mutate (hour = minute / 60) %>% 
-  group_by(sex, education, hour) %>% 
+  group_by(seqn, sex, education, hour) %>% 
   summarize(MIMS) %>% 
   mutate(sex = ifelse(sex == 1, "Male", "Female")) %>% 
   mutate(education = ifelse(education == 1, " Less than High School",
@@ -128,7 +213,8 @@ ggplot(timecourse_plot, aes(x = hour, y = MIMS, color = sex)) +
   theme_bw()
 ```
 
-Males and females tended to show similar trends, with activity decreasing from between hour 0 and hour 5 (most likely corressponding to sleeping hours for most participants), increasing after hour 5 until plateauing at a maximum at around hours 10-20. After hour 20, acitivty starts to decrease again. In all three education levels, women have slightly higher activity at most hours.
+  This plot was created by group seqn ID (to ensure no duplicate plot points), sex, education, and hour (which converted minutes to hours by dividing minutes by 60). Each MIMS activity was taken for the plot points in this group using the summarize() function. The scatter plot plotted activity vs hour. Since there were a lot of data, the plot points overlapped one another and it became hard to see trends, so a trend line using geom_smooth was added and the plots were made transparent to see the trend lines better.
+  Males and females tended to show similar trends, with activity decreasing from between hour 0 and hour 5 (most likely corresponding to sleeping hours for most participants), increasing after hour 5 until plateauing at a maximum at around hours 10-20. After hour 20, acitivity starts to decrease again. In all three education levels, women have slightly higher activity at most hours.
 ## Problem 3
 ```{r message = FALSE}
 jan2020_df = 
@@ -165,7 +251,8 @@ ride_count =
 knitr::kable(ride_count)
   
 ```
-Member ride counts have always been substatially higher than "casual" riders. July in both years saw an increase in rides from both membership rides, corressponding to more people biking in the summer. There are also a lot more riders in 2024 in both January and July compared to the same months in 2020. This may be due to less people knowing about these bikes/ less bikes or bike station available for the public to use. Additionally, July 2020 still had very high Covid-19 rates, so it could also indicate people quarantining due to the pandemic. 
+  Data was grouped by date and member type and the counts of these grouped points were taken using the summarize() function.
+  Member ride counts have always been substantially higher than "casual" riders. July in both years saw an increase in rides from both membership rides, corresponding to more people biking in the summer/warm weather. There are a lot more riders in 2024 in both January and July compared to the same months in 2020. This may be due to less people knowing about these bikes or less bikes/bike stations available for the public to use. Additionally, July 2020 still had very high Covid-19 rates, so it could also indicate people quarantining due to the pandemic. 
 ```{r}
 july2024_rank =
   july2024_df %>% 
@@ -176,7 +263,6 @@ july2024_rank =
   slice(1:5)
 
 knitr::kable(july2024_rank)
-
 ```
 
 ```{r}
@@ -213,4 +299,5 @@ ggplot(ride_dist_plot, aes(x = month, y = duration, color = member_type)) +
        x = "Month", y = "Ride Duration (minutes)") +
   theme_bw()
 ```
-There are many outliers in all subsets of these data, but the boxplots in general show that the ride times for casual riders is higher than that of member riders. Casual riders have higher rental rates and fees, so it may make more sense financially for these riders to have fewer, longer rides compared to member riders, who can have many, shorter rides.  
+  I chose to show this data as box plots since the task was to show the distribution of data and not all data points. Moreover, I thought any trends that could be seen through this data would be much easier to visualize using box plots.
+  There are many outliers in all subsets of these data, but the box plots in general show that the ride times for casual riders is higher than that of member riders. Casual riders have higher rental rates and fees, so it may make more sense financially for these riders to have fewer, longer rides compared to member riders, who can have many, shorter rides. Moreover, the difference between the distribution of ride times for class  bikes vs. electric bikes in member riders was very small in both months. In casual riders, however, classic bikes tended to have longer ride times.
