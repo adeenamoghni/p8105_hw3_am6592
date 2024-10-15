@@ -40,14 +40,14 @@ mims_df =
   janitor::clean_names()
 
 full_accel_df = left_join(mims_df, demo_df, by = "seqn") %>% 
-  filter(age > 21, !is.na(seqn), !is.na(sex), !is.na(age), !is.na(bmi), !is.na(education)) %>% 
+  filter(age > 20, !is.na(seqn), !is.na(sex), !is.na(age), !is.na(bmi), !is.na(education)) %>% 
   pivot_longer(
     min1:min1440,
     names_to = "minute", 
     values_to = "MIMS",
     names_prefix = "min") %>%  
   mutate(
-    minute = as.factor(minute)
+    minute = as.double(minute)
   )
 ```
 
@@ -58,7 +58,7 @@ education_count =
   mutate(sex = ifelse(sex == 1, "Male", "Female")) %>% 
   mutate(education = ifelse(education == 1, "Less than High School",
                             ifelse(education == 2, "High School Equivalent", "More than High School"))) %>% 
-  group_by(sex, education)%>% 
+  group_by(sex, education) %>% 
   summarize(counts = n())%>% 
   pivot_wider(
     names_from = "education", 
@@ -71,7 +71,7 @@ knitr::kable(education_count)
 ```{r}
 demo_plot = 
   demo_df %>% 
-  filter(age > 21) %>%
+  filter(age > 20) %>%
   na.omit(demo_df) %>% 
   mutate(sex = ifelse(sex == 1, "Male", "Female")) %>% 
   mutate(education = ifelse(education == 1, " Less than High School",
@@ -85,7 +85,7 @@ ggplot(demo_plot, aes(x = age, fill = education)) +
        fill = "Education Level") +
   theme_bw()
 ```
-The number of males and females who have less than a high school equivalent education are about the same (27 and 28, respectively), as are the number of men and women who have more than a high school equivalent education (54 and 59, respectively). However, the number of males who have a high school equivalent education far outnumber the number of women who have the same education level (34 and 23 , respectively). In both sexes, about half the participants have more than a high school education. When blocking for age, those with more than a high school equivalent education tended to skew towards younger women from the ages fo 20 to 40. Those with a high school equivalent and less than high school valent education tended to skew towards older women (aged 60+) but there was local maxima for both these education levels in middle aged women (40-60 years old), but not as pronounced compared to in older women. In men, those with more than a high school equivalent education also tended to be younger, but this skewness was not as pronounced as compared to the distribution of women of the same education level. Those with less than a high school equivalent education skewed to be either between the ages of 40 to 50 or 60+, while those with a high school equivalent education skewed to middle ages men (between 50 to 60 years old)
+The number of males and females who have less than a high school equivalent education are about the same (27 and 28, respectively), as are the number of men and women who have more than a high school equivalent education (56 and 59, respectively). However, the number of males who have a high school equivalent education far outnumber the number of women who have the same education level (35 and 23 , respectively). In both sexes, about half the participants have more than a high school education. When blocking for age, those with more than a high school equivalent education tended to skew towards younger women from the ages fo 20 to 40. Those with a high school equivalent and less than high school equivalent education tended to skew towards older women (aged 60+) but there was local maxima for both these education levels in middle aged women (40-60 years old), but not as pronounced compared to in older women. In men, those with more than a high school equivalent education also tended to be younger, but this skewness was not as pronounced as compared to the distribution of women of the same education level. Those with less than a high school equivalent education skewed to be either between the ages of 40 to 50 or 60+, while those with a high school equivalent education skewed to middle ages men (between 50 to 60 years old)
 ```{r}
 activity_plot = 
   full_accel_df %>%
@@ -96,27 +96,39 @@ activity_plot =
                             ifelse(education == 2, "High School Equivalent", "More than High School")))
          
 
-ggplot(activity_plot, aes(x = age, y = total_activity, color = education)) +
-  geom_point(alpha = .5) +
-  geom_smooth(se = FALSE) +
-  facet_grid(~sex) +
-  labs(title = "Total Daily Activity Levels vs. Age",
-       x = "Age (years)", y = "Total Daily Activity (*MIMS)",
-       color = "Education Level") + 
-  theme_bw()
-```
-
-```{r}
 ggplot(activity_plot, aes(x = age, y = total_activity, color = sex)) +
   geom_point(alpha = .5) +
   geom_smooth(se = FALSE) +
   facet_grid(~education) +
   labs(title = "Total Daily Activity Levels vs. Age",
        x = "Age (years)", y = "Total Daily Activity (*MIMS)",
-       color = "Education Level") +
+       color = "Education Level") + 
   theme_bw()
 ```
 
+As age increases, males and females of all education levels see a decrease in activity overall. For those with less than a HS education, younger females (<40 years of age) tended to be more active, after 40 years old, males tended to be more active. For those with a HS equivalent education and more than HS education, females tended to be more active compared to men. For adults <~50 years old, those with more than a HS education tended to be less active, in both males and females. After this point, however, activity seems to have evened out. 
+
+```{r}
+timecourse_plot = 
+  full_accel_df %>%
+  mutate (hour = minute / 60) %>% 
+  group_by(sex, education, hour) %>% 
+  summarize(MIMS) %>% 
+  mutate(sex = ifelse(sex == 1, "Male", "Female")) %>% 
+  mutate(education = ifelse(education == 1, " Less than High School",
+                            ifelse(education == 2, "High School Equivalent", "More than High School")))
+
+ggplot(timecourse_plot, aes(x = hour, y = MIMS, color = sex)) +
+  geom_point(alpha = 0.01) +
+  geom_smooth() +
+  facet_grid(~education) + 
+  labs(title = "Activity Levels vs. Hour",
+       x = "Hour", y = "Activity (*MIMS)",
+       color = "Sex") +
+  theme_bw()
+```
+
+Males and females tended to show similar trends, with activity decreasing from between hour 0 and hour 5 (most likely corressponding to sleeping hours for most participants), increasing after hour 5 until plateauing at a maximum at around hours 10-20. After hour 20, acitivty starts to decrease again. In all three education levels, women have slightly higher activity at most hours.
 ## Problem 3
 ```{r message = FALSE}
 jan2020_df = 
